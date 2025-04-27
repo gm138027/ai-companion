@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateChatResponse } from "@/lib/ai";
 import { getCharacterById } from "@/lib/characters";
 
+// 定义一个Error类型（避免使用any）
+interface ErrorWithMessage {
+  message?: string;
+  toString(): string;
+}
+
 export async function POST(req: NextRequest) {
   try {
     // 解析请求体
@@ -38,19 +44,11 @@ export async function POST(req: NextRequest) {
 
     // 返回响应
     return NextResponse.json({ response });
-  } catch (error: any) {  // 使用any类型断言
+  } catch (error) {
     console.error("聊天API错误:", error);
     
     // 安全地获取错误消息
     const errorString = String(error);
-    let details = "未知错误";
-    try {
-      details = error.message || errorString;
-    } catch {
-      // 忽略获取错误详情的错误
-    }
-    
-    console.error("错误详情:", details);
     
     // 更友好的错误信息
     let errorMessage = "处理聊天请求失败";
@@ -63,7 +61,7 @@ export async function POST(req: NextRequest) {
     }
     
     return NextResponse.json(
-      { error: errorMessage, details },
+      { error: errorMessage, details: errorString },
       { status: 500 }
     );
   }

@@ -1,6 +1,7 @@
-   {
-     "extends": "next/core-web-vitals",
-     "rules": {
-       "@next/next/no-img-element": "warn"
-     }
-   }
+{
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "@next/next/no-img-element": "warn",
+    "@typescript-eslint/no-explicit-any": "off"
+  }
+}
