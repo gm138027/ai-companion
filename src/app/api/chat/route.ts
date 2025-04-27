@@ -2,12 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateChatResponse } from "@/lib/ai";
 import { getCharacterById } from "@/lib/characters";
 
-// 定义一个Error类型（避免使用any）
-interface ErrorWithMessage {
-  message?: string;
-  toString(): string;
-}
-
 export async function POST(req: NextRequest) {
   try {
     // 解析请求体
