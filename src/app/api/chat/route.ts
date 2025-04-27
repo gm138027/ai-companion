@@ -1,3 +1,7 @@
+import { NextRequest, NextResponse } from "next/server";
+import { generateChatResponse } from "@/lib/ai";
+import { getCharacterById } from "@/lib/characters";
+
 export async function POST(req: NextRequest) {
   try {
     // 解析请求体
