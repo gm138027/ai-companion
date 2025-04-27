@@ -40,70 +40,73 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     setInput("");
     setIsLoading(true);
 
-   try {
-  const response = await fetch("/api/chat", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      characterId: character.id,
-      messages: [...messages, userMessage].map((msg) => ({
-        role: msg.role === "user" ? "user" : "model",
-        content: msg.content,
-      })),
-    }),
-  });
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          characterId: character.id,
+          messages: [...messages, userMessage].map((msg) => ({
+            role: msg.role === "user" ? "user" : "model",
+            content: msg.content,
+          })),
+        }),
+      });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || "请求失败");
-  }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "请求失败");
+      }
 
-  const data = await response.json();
-  const aiResponse = {
-    role: "assistant" as const,
-    content: data.response,
+      const data = await response.json();
+      const aiResponse = {
+        role: "assistant" as const,
+        content: data.response,
+      };
+
+      setMessages((prev) => [...prev, aiResponse]);
+    } catch (error) {
+      console.error("发送消息时出错:", error);
+      
+      // 显示更具体的错误消息
+      let errorMessage = "对不起，我现在无法回应。请稍后再试。";
+      if (error.message.includes("API密钥")) {
+        errorMessage = "系统配置错误: API密钥问题";
+      } else if (error.message.includes("网络")) {
+        errorMessage = "无法连接到AI服务，请检查网络";
+      }
+      
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: errorMessage
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-  setMessages((prev) => [...prev, aiResponse]);
-} catch (error) {
-  console.error("发送消息时出错:", error);
-  
-  // 显示更具体的错误消息
-  let errorMessage = "对不起，我现在无法回应。请稍后再试。";
-  if (error.message.includes("API密钥")) {
-    errorMessage = "系统配置错误: API密钥问题";
-  } else if (error.message.includes("网络")) {
-    errorMessage = "无法连接到AI服务，请检查网络";
-  }
-  
-  setMessages((prev) => [
-    ...prev,
-    {
-      role: "assistant",
-      content: errorMessage
-    },
-  ]);
-} finally {
-  setIsLoading(false);
-}
 
   return (
     <div className="flex h-full flex-col">
-      <div className="mb-4 flex items-center space-x-2 border-b border-gray-200 pb-4 dark:border-gray-700">
-        <div className="relative h-10 w-10 overflow-hidden rounded-full">
-          <img
-            src={character.avatar}
-            alt={character.name}
-            className="h-full w-full object-cover"
-          />
-        </div>
-        <div>
-          <h2 className="text-lg font-semibold">{character.name}</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {character.personality}
-          </p>
+      <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-700">
+        <div className="flex items-center space-x-2">
+          <div className="relative h-10 w-10 overflow-hidden rounded-full">
+            <img
+              src={character.avatar}
+              alt={character.name}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold">{character.name}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {character.personality}
+            </p>
+          </div>
         </div>
       </div>
 
