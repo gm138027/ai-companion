@@ -38,22 +38,32 @@ export async function POST(req: NextRequest) {
 
     // 返回响应
     return NextResponse.json({ response });
-  } catch (error) {
+  } catch (error: any) {  // 使用any类型断言
     console.error("聊天API错误:", error);
-    console.error("错误详情:", JSON.stringify(error, null, 2));
+    
+    // 安全地获取错误消息
+    const errorString = String(error);
+    let details = "未知错误";
+    try {
+      details = error.message || errorString;
+    } catch {
+      // 忽略获取错误详情的错误
+    }
+    
+    console.error("错误详情:", details);
     
     // 更友好的错误信息
     let errorMessage = "处理聊天请求失败";
-    if (error.toString().includes("API key")) {
+    if (errorString.includes("API key")) {
       errorMessage = "API密钥错误，请检查配置";
-    } else if (error.toString().includes("quota")) {
+    } else if (errorString.includes("quota")) {
       errorMessage = "API配额已用尽";
-    } else if (error.toString().includes("network")) {
+    } else if (errorString.includes("network")) {
       errorMessage = "网络错误，无法连接到Google API";
     }
     
     return NextResponse.json(
-      { error: errorMessage, details: error.message || "未知错误" },
+      { error: errorMessage, details },
       { status: 500 }
     );
   }
