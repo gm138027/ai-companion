@@ -72,9 +72,12 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
       
       // 显示更具体的错误消息
       let errorMessage = "对不起，我现在无法回应。请稍后再试。";
-      if (error.message.includes("API密钥")) {
+      
+      // 安全地检查错误消息
+      const errorString = String(error);
+      if (errorString.includes("API密钥")) {
         errorMessage = "系统配置错误: API密钥问题";
-      } else if (error.message.includes("网络")) {
+      } else if (errorString.includes("网络")) {
         errorMessage = "无法连接到AI服务，请检查网络";
       }
       
