@@ -58,7 +58,6 @@ export async function generateChatResponse(
     console.error("生成聊天响应时出错:", error);
     
     const errorString = String(error);
-    let errorDetails = "未知错误";
     
     // 详细记录错误信息
     if (error && typeof error === 'object') {
