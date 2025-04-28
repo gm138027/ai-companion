@@ -48,13 +48,19 @@ export async function generateChatResponse(
   } catch (error) {
     console.error("生成聊天响应时出错:", error);
     
-    // 尝试获取详细错误信息
-    if (error.response) {
-      console.error("错误状态码:", error.response.status);
-      console.error("错误数据:", JSON.stringify(error.response.data));
-    }
-    
+    // 安全地处理错误信息
     const errorString = String(error);
+    let errorDetails = "未知错误";
+    
+    // 安全地检查是否有response属性
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response) {
+        console.error("错误状态码:", axiosError.response.status);
+        errorDetails = JSON.stringify(axiosError.response.data || {});
+        console.error("错误数据:", errorDetails);
+      }
+    }
     
     // 提供更具体的错误信息
     if (errorString.includes("401")) {
