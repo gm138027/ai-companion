@@ -1,6 +1,16 @@
 // src/lib/ai.ts
 import axios from "axios";
 
+// 定义错误接口
+interface ErrorWithResponse {
+  response?: {
+    status?: number;
+    data?: unknown;
+  };
+  message?: string;
+  toString(): string;
+}
+
 // API密钥
 const apiKey = process.env.MOONSHOT_API_KEY || "";
 
@@ -53,11 +63,11 @@ export async function generateChatResponse(
     let errorDetails = "未知错误";
     
     // 安全地检查是否有response属性
-    if (error && typeof error === 'object' && 'response' in error) {
-      const axiosError = error as any;
-      if (axiosError.response) {
-        console.error("错误状态码:", axiosError.response.status);
-        errorDetails = JSON.stringify(axiosError.response.data || {});
+    if (error && typeof error === 'object') {
+      const err = error as ErrorWithResponse;
+      if (err.response) {
+        console.error("错误状态码:", err.response.status);
+        errorDetails = JSON.stringify(err.response.data || {});
         console.error("错误数据:", errorDetails);
       }
     }
