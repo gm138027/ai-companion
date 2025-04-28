@@ -12,7 +12,7 @@ interface ErrorWithResponse {
 }
 
 // API密钥
-const apiKey = process.env.MOONSHOT_API_KEY || "";
+const apiKey = process.env.DEEPSEEK_API_KEY || "";
 
 // 生成聊天响应函数
 export async function generateChatResponse(
@@ -32,9 +32,9 @@ export async function generateChatResponse(
       }))
     ];
     
-    console.log("发送请求到硅基流动API...");
+    console.log("发送请求到DeepSeek API...");
     
-    // 调用硅基流动API
+    // 调用DeepSeek API
     const response = await axios.post(
       "https://api.moonshot.cn/v1/chat/completions",
       {
