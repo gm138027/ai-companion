@@ -33,12 +33,13 @@ export async function generateChatResponse(
     
     console.log("发送请求到SiliconFlow API...");
     
-    // 使用正确的API端点
+    // 使用正确的API端点并启用流式输出
     const response = await axios.post(
       "https://api.siliconflow.cn/v1/chat/completions",
       {
         model: "deepseek-ai/DeepSeek-R1",
         messages: formattedMessages,
+        stream: true,  // 启用流式输出
         temperature: 0.7,
         max_tokens: 800
       },
@@ -46,14 +47,45 @@ export async function generateChatResponse(
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${apiKey}`
-        }
+        },
+        timeout: 60000,  // 增加超时时间为60秒
+        responseType: 'stream'
       }
     );
     
-    console.log("API响应状态:", response.status);
+    // 处理流式响应
+    let fullContent = '';
     
-    // 返回响应内容
-    return response.data.choices[0].message.content;
+    // 解析流式响应
+    for await (const chunk of response.data) {
+      try {
+        const lines = chunk.toString().split('\n').filter(line => line.trim() !== '');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.substring(6);
+            if (data === '[DONE]') continue;
+            
+            try {
+              const parsedData = JSON.parse(data);
+              const content = parsedData.choices[0]?.delta?.content || '';
+              if (content) {
+                fullContent += content;
+              }
+            } catch (e) {
+              console.error("解析流式数据出错:", e);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("处理流式数据块出错:", e);
+      }
+    }
+    
+    console.log("API响应接收完成");
+    
+    // 返回完整响应内容
+    return fullContent;
   } catch (error) {
     console.error("生成聊天响应时出错:", error);
     
