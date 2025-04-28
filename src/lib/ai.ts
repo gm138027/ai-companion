@@ -10,7 +10,10 @@ export async function generateChatResponse(
   messages: { role: "user" | "model"; content: string }[]
 ): Promise<string> {
   try {
-    // 准备消息历史，添加系统提示
+    console.log("开始生成聊天响应...");
+    console.log("API密钥前5个字符:", apiKey.substring(0, 5));
+    
+    // 准备消息历史
     const formattedMessages = [
       { role: "system", content: systemPrompt },
       ...messages.map(msg => ({
@@ -18,17 +21,17 @@ export async function generateChatResponse(
         content: msg.content
       }))
     ];
-
+    
+    console.log("发送请求到硅基流动API...");
+    
     // 调用硅基流动API
     const response = await axios.post(
       "https://api.moonshot.cn/v1/chat/completions",
       {
         model: "Qwen/QwQ-32B",  // 使用Qwen/QwQ-32B模型
         messages: formattedMessages,
-        stream: false,
         temperature: 0.7,
-        max_tokens: 1024,       // 增加最大token以获取更长回复
-        response_format: { type: "text" }
+        max_tokens: 800
       },
       {
         headers: {
@@ -37,22 +40,35 @@ export async function generateChatResponse(
         }
       }
     );
-
+    
+    console.log("API响应状态:", response.status);
+    
     // 返回响应内容
     return response.data.choices[0].message.content;
   } catch (error) {
     console.error("生成聊天响应时出错:", error);
-    const errorMessage = String(error);
     
-    // 提供更具体的错误信息
-    if (errorMessage.includes("401")) {
-      return "API密钥无效或过期，请检查配置。";
-    } else if (errorMessage.includes("429")) {
-      return "API请求频率超限，请稍后再试。";
-    } else if (errorMessage.includes("model")) {
-      return "模型不可用，请检查模型名称或选择其他模型。";
+    // 尝试获取详细错误信息
+    if (error.response) {
+      console.error("错误状态码:", error.response.status);
+      console.error("错误数据:", JSON.stringify(error.response.data));
     }
     
-    return `对不起，我暂时无法处理您的请求。错误信息: ${errorMessage}`;
+    const errorString = String(error);
+    
+    // 提供更具体的错误信息
+    if (errorString.includes("401")) {
+      return "API密钥认证失败，请检查密钥是否正确。";
+    } else if (errorString.includes("403")) {
+      return "API访问被拒绝，可能没有权限使用该模型或API。";
+    } else if (errorString.includes("429")) {
+      return "请求过于频繁，已超出API使用限制。";
+    } else if (errorString.includes("model")) {
+      return "模型不可用，请检查模型名称是否正确。";
+    } else if (errorString.includes("timeout")) {
+      return "API请求超时，请稍后再试。";
+    }
+    
+    return `API请求失败: ${errorString.substring(0, 100)}...`;
   }
 }
