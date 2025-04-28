@@ -33,7 +33,7 @@ export async function generateChatResponse(
     
     console.log("发送请求到SiliconFlow API...");
     
-    // 根据SiliconFlow官方文档调用API
+    // 使用正确的API端点
     const response = await axios.post(
       "https://api.siliconflow.cn/v1/chat/completions",
       {
@@ -70,15 +70,15 @@ export async function generateChatResponse(
     
     // 提供更具体的错误信息
     if (errorString.includes("401")) {
-      return "API密钥认证失败（401错误）。请检查您的API密钥是否正确，并确保它是在硅基流动(SiliconFlow)平台创建的有效密钥。";
+      return "API密钥认证失败（401错误）。请检查您的API密钥是否正确，并确保它是在硅基流动(SiliconFlow)平台创建的有效密钥。您可能需要完成实名认证。";
     } else if (errorString.includes("403")) {
-      return "API访问被拒绝（403错误）。您可能没有使用此模型的权限。";
+      return "API访问被拒绝（403错误）。您可能没有使用此模型的权限，或者需要完成实名认证。";
     } else if (errorString.includes("404")) {
-      return "API端点不存在（404错误）。请检查API URL是否正确。";
+      return "API端点不存在（404错误）。请检查API URL是否正确为'https://api.siliconflow.cn/v1/chat/completions'。";
     } else if (errorString.includes("429")) {
       return "请求过于频繁（429错误），已超出API使用限制。";
     } else if (errorString.includes("model")) {
-      return "模型不可用或名称错误。请使用'deepseek-ai/DeepSeek-R1'或'Pro/deepseek-ai/DeepSeek-R1'作为模型名称。";
+      return "模型不可用或名称错误。请使用'deepseek-ai/DeepSeek-R1'作为模型名称。";
     }
     
     return `API请求失败: ${errorString}`;
