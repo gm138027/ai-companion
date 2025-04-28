@@ -1,52 +1,58 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+// src/lib/ai.ts
+import axios from "axios";
 
-// Your API key
-const apiKey = process.env.GOOGLE_AI_API_KEY || "";
+// API密钥
+const apiKey = process.env.MOONSHOT_API_KEY || "";
 
-// 调试：打印API密钥是否存在（不要打印完整密钥）
-console.log("API密钥是否存在:", apiKey ? "是" : "否");
-console.log("API密钥前5个字符:", apiKey.substring(0, 5));
-
-// Create a new instance of GoogleGenerativeAI with your API key
-const genAI = new GoogleGenerativeAI(apiKey);
-
-// Function to generate a response from the AI model
+// 生成聊天响应函数
 export async function generateChatResponse(
   systemPrompt: string,
   messages: { role: "user" | "model"; content: string }[]
 ): Promise<string> {
   try {
-    // 调试：打印收到的消息
-    console.log("用户最后消息:", messages[messages.length - 1].content);
-    
-    // Get the model
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    // 准备消息历史，添加系统提示
+    const formattedMessages = [
+      { role: "system", content: systemPrompt },
+      ...messages.map(msg => ({
+        role: msg.role === "user" ? "user" : "assistant",
+        content: msg.content
+      }))
+    ];
 
-    // Create a chat instance
-    const chat = model.startChat({
-      generationConfig: {
+    // 调用硅基流动API
+    const response = await axios.post(
+      "https://api.moonshot.cn/v1/chat/completions",
+      {
+        model: "Qwen/QwQ-32B",  // 使用Qwen/QwQ-32B模型
+        messages: formattedMessages,
+        stream: false,
         temperature: 0.7,
-        topP: 0.9,
-        topK: 40,
-        maxOutputTokens: 1000,
+        max_tokens: 1024,       // 增加最大token以获取更长回复
+        response_format: { type: "text" }
       },
-      systemInstruction: systemPrompt,
-    });
-
-    // 调试：打印系统提示词长度
-    console.log("系统提示词长度:", systemPrompt.length);
-
-    // Send the message to the model
-    const result = await chat.sendMessage(
-      messages[messages.length - 1].content
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        }
+      }
     );
 
-    // Return the response
-    return result.response.text();
+    // 返回响应内容
+    return response.data.choices[0].message.content;
   } catch (error) {
-    // 详细打印错误
-    console.error("Error generating chat response:", error);
-    console.error("Error details:", JSON.stringify(error, null, 2));
-    return "对不起，我现在无法处理您的请求。请稍后再试。";
+    console.error("生成聊天响应时出错:", error);
+    const errorMessage = String(error);
+    
+    // 提供更具体的错误信息
+    if (errorMessage.includes("401")) {
+      return "API密钥无效或过期，请检查配置。";
+    } else if (errorMessage.includes("429")) {
+      return "API请求频率超限，请稍后再试。";
+    } else if (errorMessage.includes("model")) {
+      return "模型不可用，请检查模型名称或选择其他模型。";
+    }
+    
+    return `对不起，我暂时无法处理您的请求。错误信息: ${errorMessage}`;
   }
 }
