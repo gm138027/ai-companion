@@ -38,7 +38,7 @@ export async function generateChatResponse(
     const response = await axios.post(
       "https://api.moonshot.cn/v1/chat/completions",
       {
-        model: "Qwen/QwQ-32B",  // 使用Qwen/QwQ-32B模型
+        model: "deepseek-ai/DeepSeek-R1",  // 使用DeepSeek-R1模型
         messages: formattedMessages,
         temperature: 0.7,
         max_tokens: 800
