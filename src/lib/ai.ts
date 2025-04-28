@@ -11,8 +11,8 @@ interface ErrorWithResponse {
   toString(): string;
 }
 
-// API密钥
-const apiKey = process.env.DEEPSEEK_API_KEY || "";
+// 使用正确的API密钥环境变量
+const apiKey = process.env.SILICONFLOW_API_KEY || "";
 
 // 生成聊天响应函数
 export async function generateChatResponse(
@@ -21,7 +21,6 @@ export async function generateChatResponse(
 ): Promise<string> {
   try {
     console.log("开始生成聊天响应...");
-    console.log("API密钥前5个字符:", apiKey.substring(0, 5));
     
     // 准备消息历史
     const formattedMessages = [
@@ -32,13 +31,13 @@ export async function generateChatResponse(
       }))
     ];
     
-    console.log("发送请求到DeepSeek API...");
+    console.log("发送请求到SiliconFlow API...");
     
-    // 调用DeepSeek API
+    // 根据SiliconFlow官方文档调用API
     const response = await axios.post(
-      "https://api.moonshot.cn/v1/chat/completions",
+      "https://api.siliconflow.cn/v1/chat/completions",
       {
-        model: "deepseek-ai/DeepSeek-R1",  // 使用DeepSeek-R1模型
+        model: "deepseek-ai/DeepSeek-R1",
         messages: formattedMessages,
         temperature: 0.7,
         max_tokens: 800
@@ -58,33 +57,31 @@ export async function generateChatResponse(
   } catch (error) {
     console.error("生成聊天响应时出错:", error);
     
-    // 安全地处理错误信息
     const errorString = String(error);
     let errorDetails = "未知错误";
     
-    // 安全地检查是否有response属性
+    // 详细记录错误信息
     if (error && typeof error === 'object') {
       const err = error as ErrorWithResponse;
       if (err.response) {
         console.error("错误状态码:", err.response.status);
-        errorDetails = JSON.stringify(err.response.data || {});
-        console.error("错误数据:", errorDetails);
+        console.error("错误详情:", JSON.stringify(err.response.data));
       }
     }
     
     // 提供更具体的错误信息
     if (errorString.includes("401")) {
-      return "API密钥认证失败，请检查密钥是否正确。";
+      return "API密钥认证失败（401错误）。请检查您的API密钥是否正确，并确保它是在硅基流动(SiliconFlow)平台创建的有效密钥。";
     } else if (errorString.includes("403")) {
-      return "API访问被拒绝，可能没有权限使用该模型或API。";
+      return "API访问被拒绝（403错误）。您可能没有使用此模型的权限。";
+    } else if (errorString.includes("404")) {
+      return "API端点不存在（404错误）。请检查API URL是否正确。";
     } else if (errorString.includes("429")) {
-      return "请求过于频繁，已超出API使用限制。";
+      return "请求过于频繁（429错误），已超出API使用限制。";
     } else if (errorString.includes("model")) {
-      return "模型不可用，请检查模型名称是否正确。";
-    } else if (errorString.includes("timeout")) {
-      return "API请求超时，请稍后再试。";
+      return "模型不可用或名称错误。请使用'deepseek-ai/DeepSeek-R1'或'Pro/deepseek-ai/DeepSeek-R1'作为模型名称。";
     }
     
-    return `API请求失败: ${errorString.substring(0, 100)}...`;
+    return `API请求失败: ${errorString}`;
   }
 }
